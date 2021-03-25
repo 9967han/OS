@@ -14,7 +14,7 @@ struct process {
 struct processTimeStruct{
     int pid, AT, BT, TT, WT;
 };
-struct compare {//
+struct compare {
 	bool operator()(process A, process B) {
 		return A.at > B.at; //arriving time 작은 순서
 	}
@@ -31,53 +31,17 @@ vector<process> exitV;
 vector<processTimeStruct> processTimeVec;
 vector<int> CPU;
 int timeQuantum[4] = {1, 2, 4, INF};
-int curTime = 0, totalProcNum = 0;
+int curTime = 1, totalProcNum = 0;
 int main(){
     input();
     totalProcNum = rq.size();
     createToReady();
     while(1) {
         if(exitV.size() == totalProcNum) break;
-        bool flag = false;
-        for(int i=0; i<4; i++){
-            if(!MFQ[i].empty()){
-                process cur = MFQ[i].top(); MFQ[i].pop();
-                CPU.push_back(cur.pid); flag = true;
-                cur.progress++;
-                cur.occup++;
-                if(cur.progress == cur.burst[cur.step]){
-                    cur.at = curTime;
-                    cur.step++;
-                    cur.occup = 0;
-                    cur.progress = -1;
-                    cur.Q == 0 ? cur.Q = 0 : cur.Q = cur.Q-1;
-                    if(cur.step == cur.burst.size()) {
-                        for(int j=0; j<processTimeVec.size(); j++){
-                            if(processTimeVec[j].pid == cur.pid) processTimeVec[j].TT = curTime+1 - processTimeVec[j].AT;
-                        }
-                        exitV.push_back(cur);
-                    }
-                    else IO.push(cur);
-                    createToReady();
-                    IOToReady();
-                    break;
-                } else if(cur.occup == timeQuantum[i]){
-                    cur.at = curTime;
-                    cur.occup = 0;
-                    cur.Q == 3 ? cur.Q = 3 : cur.Q = cur.Q+1;
-                    if(i <= 2) MFQ[i+1].push(cur);
-                    else MFQ[i].push(cur);
-                    createToReady();
-                    IOToReady();
-                    break;
-                }
-                MFQ[i].push(cur);
-                break;
-            }
-        }
         while(!IO.empty()) {
             process cur = IO.top(); IO.pop();
             cur.progress++;
+            // cout << cur.pid << " " << cur.progress << endl;
             if(cur.progress == cur.burst[cur.step]){
                 cur.step++;
                 cur.progress = 0;
@@ -89,6 +53,49 @@ int main(){
         }
         IO = IOTemp;
         while(!IOTemp.empty()) IOTemp.pop();
+        bool flag = false;
+        for(int i=0; i<4; i++){
+            if(!MFQ[i].empty()){
+                process cur = MFQ[i].top(); MFQ[i].pop();
+                CPU.push_back(cur.pid); flag = true;
+                cur.progress++;
+                cur.occup++;
+                if(cur.progress == cur.burst[cur.step]){
+                    createToReady();
+                    IOToReady();
+                    cur.at = curTime;
+                    cur.step++;
+                    cur.occup = 0;
+                    cur.progress = 0;
+                    if(cur.Q == 3) cur.Q = 3;
+                    else cur.Q == 0 ? cur.Q = 0 : cur.Q = cur.Q-1;
+                    // cout << "pid : " << cur.pid << " go to MFQ" << cur.Q << endl;
+                    if(cur.step == cur.burst.size()) {
+                        for(int j=0; j<processTimeVec.size(); j++){
+                            if(processTimeVec[j].pid == cur.pid) processTimeVec[j].TT = curTime - processTimeVec[j].AT;
+                        }
+                        exitV.push_back(cur);
+                    }
+                    else {
+                        // cout << cur.pid << "go to sleep" << endl;
+                        IO.push(cur);
+                    }
+                    break;
+                } else if(cur.occup == timeQuantum[i]){
+                    createToReady();
+                    IOToReady();
+                    cur.at = curTime;
+                    cur.occup = 0;
+                    cur.Q == 3 ? cur.Q = 3 : cur.Q = cur.Q+1;
+                    if(i <= 2) MFQ[i+1].push(cur);
+                    else MFQ[i].push(cur);
+                    // cout << "timeQuantume !! pid : " << cur.pid << " go to MFQ" << i << endl;
+                    break;
+                }
+                MFQ[i].push(cur);
+                break;
+            }
+        }
         if(!flag) {
             CPU.push_back(0);
             IOToReady();
@@ -101,7 +108,7 @@ int main(){
 
 void input(){
     string line;
-	ifstream in("input2.txt");
+	ifstream in("input.txt");
 	getline(in, line);
 	int lineNum = atoi(line.c_str());
     processTimeVec.push_back({0, 0, 0, 0});
@@ -145,7 +152,7 @@ void printCPU(){
         for(int j=0; j<v[i].second/2; j++) cout << "-";
         cout << "|";
     }
-    int TTSum = 0, WTSum = 0;
+    float TTSum = 0, WTSum = 0;
     for(int i=1; i<processTimeVec.size(); i++){
         TTSum += processTimeVec[i].TT;
         WTSum += processTimeVec[i].TT - processTimeVec[i].BT;
@@ -153,7 +160,6 @@ void printCPU(){
     cout << endl;
     cout << "Average Turnaround Time : " << TTSum / totalProcNum << endl;
     cout << "Average Waiting Time : " << WTSum / totalProcNum << endl;
-
     return;
 }
 
@@ -172,21 +178,8 @@ void createToReady(){
 void IOToReady(){
     while(!IOReadyQ.empty()){
         process cur = IOReadyQ.top(); IOReadyQ.pop();
+        // cout << "IO " << cur.pid << " moved to MFQ" << cur.Q << endl;
         MFQ[cur.Q].push(cur);
     }
     return;
 }
-
-// void printProcess(process A) {
-//     cout << "pid : " << A.pid << endl;
-//     cout << "at : " << A.at << endl;
-//     cout << "Q : " << A.Q << endl;
-//     cout << "progress : " << A.progress << endl;
-//     cout << "step : " << A.step << endl;
-//     cout << "burst" << endl;
-//     for(int i=0; i<A.burst.size(); i++){
-//         cout << A.burst[i] << " ";
-//     }
-//     cout << endl;
-//     return;
-// }
