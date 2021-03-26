@@ -1,5 +1,5 @@
-#include<iostream>
-#include<algorithm>
+#include <iostream>
+#include <algorithm>
 #include <string>
 #include <fstream>
 #include <queue>
@@ -16,7 +16,8 @@ struct processTimeStruct{
 };
 struct compare {
 	bool operator()(process A, process B) {
-		return A.at > B.at; //arriving time 작은 순서
+        if(A.at == B.at) return A.pid < B.pid;
+        else return A.at > B.at; //arriving time 작은 순서
 	}
 };
 void input();
@@ -41,7 +42,6 @@ int main(){
         while(!IO.empty()) {
             process cur = IO.top(); IO.pop();
             cur.progress++;
-            // cout << cur.pid << " " << cur.progress << endl;
             if(cur.progress == cur.burst[cur.step]){
                 cur.step++;
                 cur.progress = 0;
@@ -68,16 +68,14 @@ int main(){
                     cur.occup = 0;
                     cur.progress = 0;
                     if(cur.Q == 3) cur.Q = 3;
-                    else cur.Q == 0 ? cur.Q = 0 : cur.Q = cur.Q-1;
-                    // cout << "pid : " << cur.pid << " go to MFQ" << cur.Q << endl;
+                    else if (cur.Q == 0) cur.Q = 0;
+                    else cur.Q = cur.Q - 1;
                     if(cur.step == cur.burst.size()) {
                         for(int j=0; j<processTimeVec.size(); j++){
                             if(processTimeVec[j].pid == cur.pid) processTimeVec[j].TT = curTime - processTimeVec[j].AT;
                         }
                         exitV.push_back(cur);
-                    }
-                    else {
-                        // cout << cur.pid << "go to sleep" << endl;
+                    } else {
                         IO.push(cur);
                     }
                     break;
@@ -86,10 +84,9 @@ int main(){
                     IOToReady();
                     cur.at = curTime;
                     cur.occup = 0;
-                    cur.Q == 3 ? cur.Q = 3 : cur.Q = cur.Q+1;
-                    if(i <= 2) MFQ[i+1].push(cur);
-                    else MFQ[i].push(cur);
-                    // cout << "timeQuantume !! pid : " << cur.pid << " go to MFQ" << i << endl;
+                    if(cur.Q == 3) cur.Q = 3;
+                    else cur.Q = cur.Q + 1;
+                    MFQ[cur.Q].push(cur);
                     break;
                 }
                 MFQ[i].push(cur);
@@ -117,9 +114,9 @@ void input(){
         vector<int> tmp, temp = parseStrToVec(line, ' ');
         process p = {temp[0], temp[1], temp[2], 0, 0, 0};
         processTimeVec.push_back({temp[0], temp[1], 0, 0, 0});
-        for(int i=0; i<temp[3]*2-1; i++) {
-            if((4+i) % 2 == 0) processTimeVec[temp[0]].BT += temp[4+i];
-            tmp.push_back(temp[4+i]);
+        for(int j=0; j<temp[3]*2-1; j++) {
+            processTimeVec[processTimeVec.size()-1].BT += temp[4+j];
+            tmp.push_back(temp[4+j]);
         }
         p.burst = tmp;
         rq.push(p);
@@ -152,14 +149,22 @@ void printCPU(){
         for(int j=0; j<v[i].second/2; j++) cout << "-";
         cout << "|";
     }
+    cout << endl;
     float TTSum = 0, WTSum = 0;
+    for(int i=1; i<=totalProcNum; i++){
+        for(int j=0; j<processTimeVec.size(); j++){
+            if(i == processTimeVec[j].pid) {
+                cout << "P" << i << "'s TT : " << processTimeVec[j].TT << "s WT : " << (processTimeVec[j].TT - processTimeVec[j].BT) << "s" << endl;
+            }
+        }
+    }
     for(int i=1; i<processTimeVec.size(); i++){
         TTSum += processTimeVec[i].TT;
         WTSum += processTimeVec[i].TT - processTimeVec[i].BT;
     }
     cout << endl;
-    cout << "Average Turnaround Time : " << TTSum / totalProcNum << endl;
-    cout << "Average Waiting Time : " << WTSum / totalProcNum << endl;
+    cout << "Average Turnaround Time : " << TTSum / totalProcNum << "s" << endl;
+    cout << "Average Waiting Time : " << WTSum / totalProcNum << "s" << endl;
     return;
 }
 
@@ -178,7 +183,6 @@ void createToReady(){
 void IOToReady(){
     while(!IOReadyQ.empty()){
         process cur = IOReadyQ.top(); IOReadyQ.pop();
-        // cout << "IO " << cur.pid << " moved to MFQ" << cur.Q << endl;
         MFQ[cur.Q].push(cur);
     }
     return;
