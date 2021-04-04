@@ -1,5 +1,5 @@
-# ComputerArchitecture
-<b>2021.1학기 성균관대학교 컴퓨터구조개론 수업  
+# OS
+<b>2021.1학기 성균관대학교 운영체제 수업  
 Project1 : MFQ Scheduling Simulation </b>  
 • 4개의 RQ를 갖는 MFQ 스케줄링 기법 구현   
 • Q0: Time quantum 1인 RR 스케줄링 기법 사용   
