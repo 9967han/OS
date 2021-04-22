@@ -10,21 +10,16 @@ using namespace std;
 #define MatSize 100
 int N = 0, M = 0; // N : Number of Process,  M : Number of ResourceType
 vector<int> ResourceUnit; // Number of ResourceUnit;
-vector<int> getRemainUnit();
 int Alloc[MatSize][MatSize], Req[MatSize][MatSize];
 int finish[MatSize];
-void printMat();
+vector<int> getRemainUnit();
 void input();
 
 
 int main(){
     input();
-    printMat();
     for(int t=0; t<N; t++){
         vector<int> Remain = getRemainUnit();
-        cout << endl;
-        for(int i=0; i<M; i++) cout << Remain[i] << " ";
-        cout << endl;
         bool isDeadLockFlag = false;
         for(int i=0; i<N; i++){
             if(finish[i]) continue;
@@ -36,7 +31,6 @@ int main(){
                 }
             }
             if(!isAllocableFlag) { // 할당 가능하다면
-                cout << "Process " << i+1 << " Exit" << endl;
                 finish[i] = 1;
                 isDeadLockFlag = true;
                 for(int j=0; j<M; j++){
@@ -53,7 +47,7 @@ int main(){
             return 0;
         }
     }
-    cout << "NON DEADLOCK";
+    cout << "There is no Deadlock Process\n";
     return 0;
 }
 
@@ -69,12 +63,12 @@ vector<int> getRemainUnit(){ // 남은 Resource 구하기
     return Remain;
 }
 
-void input(){
+void input(){ // input처리
     memset(finish, 0, sizeof(finish));
     memset(Alloc, 0, sizeof(Alloc));
     memset(Req, 0, sizeof(Req));
     string line, temp;
-	ifstream in("input4.txt");
+	ifstream in("input.txt");
 	getline(in, line);
     stringstream ss(line);
     getline(ss, temp, ' ');
@@ -97,25 +91,6 @@ void input(){
             getline(ss, temp, ' ');
             Req[i][j] = stoi(temp);
         }
-    }
-    return;
-}
-
-void printMat(){
-    cout << "Alloc : " << endl;
-    for(int i=0; i<N; i++){
-        for(int j=0; j<M; j++){
-            cout << Alloc[i][j] << " ";
-        }
-        cout << endl;
-    }
-
-    cout << "REQ : " << endl;
-    for(int i=0; i<N; i++){
-        for(int j=0; j<M; j++){
-            cout << Req[i][j] << " ";
-        }
-        cout << endl;
     }
     return;
 }
