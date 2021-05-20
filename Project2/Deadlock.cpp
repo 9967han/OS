@@ -15,7 +15,6 @@ int finish[MatSize];
 vector<int> getRemainUnit();
 void input();
 
-
 int main(){
     input();
     for(int t=0; t<N; t++){
